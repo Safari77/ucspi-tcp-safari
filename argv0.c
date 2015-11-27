@@ -1,7 +1,7 @@
 #include "pathexec.h"
 #include "strerr.h"
 
-main(int argc,char **argv,char **envp)
+int main(int argc,char **argv,char **envp)
 {
   if (argc < 3)
     strerr_die1x(100,"argv0: usage: argv0 realname program [ arg ... ]");

@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "sig.h"
 #include "buffer.h"
 #include "strerr.h"

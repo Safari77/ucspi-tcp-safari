@@ -1,12 +1,13 @@
 #include "byte.h"
 
-unsigned int byte_chr(s,n,c)
-char *s;
-register unsigned int n;
+unsigned long int byte_chr(__s,n,c)
+const void *__s;
+unsigned long int n;
 int c;
 {
-  register char ch;
-  register char *t;
+  char ch;
+  char *t;
+  const char *s = __s;
 
   ch = c;
   t = s;

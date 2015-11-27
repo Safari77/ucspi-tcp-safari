@@ -15,7 +15,7 @@ static int init(char ip[64])
   char *x;
 
   x = env_get("DNSCACHEIP");
-  if (x)
+  if (x) {
     while (iplen <= 60)
       if (*x == '.')
 	++x;
@@ -25,6 +25,7 @@ static int init(char ip[64])
 	x += i;
 	iplen += 4;
       }
+  }
 
   if (!iplen) {
     i = openreadclose("/etc/resolv.conf",&data,64);

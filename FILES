@@ -35,7 +35,6 @@ rules.c
 rts.sh
 rts.tests
 rts.exp
-alloc.c
 alloc.h
 alloc_re.c
 auto-str.c
@@ -216,3 +215,6 @@ wait_pid.c
 warn-auto.sh
 warn-shsgr
 x86cpuid.c
+fmt_ullong.c
+must_check.h
+

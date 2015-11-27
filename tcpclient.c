@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netdb.h>
@@ -65,13 +66,13 @@ char ipstr[IP4_FMT];
 
 char seed[128];
 
-main(int argc,char **argv)
+int main(int argc,char **argv)
 {
   unsigned long u;
   int opt;
   char *x;
   int j;
-  int s;
+  int s=0;
   int cloop;
 
   dns_random_init(seed);

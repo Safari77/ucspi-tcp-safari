@@ -169,3 +169,4 @@ instcheck
 it
 setup
 check
+fmt_ullong.o

@@ -24,10 +24,36 @@ int socket_bind4_reuse(int s,char ip[4],uint16 port)
   return socket_bind4(s,ip,port);
 }
 
-void socket_tryreservein(int s,int size)
+void socket_tryreservein(int s, int size)
 {
   while (size >= 1024) {
-    if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,&size,sizeof size) == 0) return;
+    if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == 0) return;
     size -= (size >> 5);
   }
 }
+
+int socket_rcvbufsize(int s, unsigned long *size)
+{
+  int optlen;
+
+  optlen = sizeof(*size);
+  return getsockopt(s, SOL_SOCKET, SO_RCVBUF, size, &optlen);
+}
+
+
+void socket_tryreserveout(int s, int size)
+{
+  while (size >= 1024) {
+    if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) == 0) return;
+    size -= (size >> 5);
+  }
+}
+
+int socket_sndbufsize(int s, unsigned long *size)
+{
+  int optlen;
+
+  optlen = sizeof(*size);
+  return getsockopt(s, SOL_SOCKET, SO_SNDBUF, size, &optlen);
+}
+

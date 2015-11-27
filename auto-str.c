@@ -10,7 +10,7 @@ void puts(char *s)
   if (buffer_puts(&b,s) == -1) _exit(111);
 }
 
-main(int argc,char **argv)
+int main(int argc,char **argv)
 {
   char *name;
   char *value;
@@ -26,7 +26,7 @@ main(int argc,char **argv)
   puts(name);
   puts("[] = \"\\\n");
 
-  while (ch = *value++) {
+  while ((ch = *value++)) {
     puts("\\");
     octal[3] = 0;
     octal[2] = '0' + (ch & 7); ch >>= 3;

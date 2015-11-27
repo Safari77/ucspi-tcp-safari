@@ -1,3 +1,7 @@
+#include <grp.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "hasshsgr.h"
 #include "prot.h"
 

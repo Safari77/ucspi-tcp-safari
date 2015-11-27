@@ -1,3 +1,7 @@
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "buffer.h"
 #include "strerr.h"
 #include "error.h"
@@ -137,7 +141,7 @@ int mode;
     strerr_die6sys(111,FATAL,"unable to chmod .../",subdir,"/",file,": ");
 }
 
-main()
+int main()
 {
   fdsourcedir = open_read(".");
   if (fdsourcedir == -1)

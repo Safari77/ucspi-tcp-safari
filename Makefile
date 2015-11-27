@@ -12,10 +12,6 @@ addcr.o: \
 compile addcr.c buffer.h exit.h
 	./compile addcr.c
 
-alloc.o: \
-compile alloc.c alloc.h error.h
-	./compile alloc.c
-
 alloc_re.o: \
 compile alloc_re.c alloc.h byte.h
 	./compile alloc_re.c
@@ -73,39 +69,27 @@ compile buffer_put.c buffer.h str.h byte.h error.h
 	./compile buffer_put.c
 
 byte.a: \
-makelib byte_chr.o byte_copy.o byte_cr.o byte_diff.o byte_rchr.o \
-byte_zero.o case_diffb.o case_diffs.o fmt_ulong.o ip4_fmt.o \
-ip4_scan.o scan_ulong.o str_chr.o str_diff.o str_len.o str_start.o \
-uint16_pack.o uint16_unpack.o uint32_pack.o uint32_unpack.o
-	./makelib byte.a byte_chr.o byte_copy.o byte_cr.o \
-	byte_diff.o byte_rchr.o byte_zero.o case_diffb.o \
+makelib byte_chr.o byte_cr.o byte_rchr.o \
+case_diffb.o case_diffs.o fmt_ulong.o ip4_fmt.o \
+ip4_scan.o scan_ulong.o str_chr.o str_diff.o str_diffn.o str_len.o str_start.o \
+uint16_pack.o uint16_unpack.o uint32_pack.o uint32_unpack.o fmt_ullong.o
+	./makelib byte.a byte_chr.o byte_cr.o \
+	byte_rchr.o case_diffb.o \
 	case_diffs.o fmt_ulong.o ip4_fmt.o ip4_scan.o scan_ulong.o \
-	str_chr.o str_diff.o str_len.o str_start.o uint16_pack.o \
-	uint16_unpack.o uint32_pack.o uint32_unpack.o
+	str_chr.o str_diff.o str_diffn.o str_len.o str_start.o uint16_pack.o \
+	uint16_unpack.o uint32_pack.o uint32_unpack.o fmt_ullong.o
 
 byte_chr.o: \
 compile byte_chr.c byte.h
 	./compile byte_chr.c
 
-byte_copy.o: \
-compile byte_copy.c byte.h
-	./compile byte_copy.c
-
 byte_cr.o: \
 compile byte_cr.c byte.h
 	./compile byte_cr.c
 
-byte_diff.o: \
-compile byte_diff.c byte.h
-	./compile byte_diff.c
-
 byte_rchr.o: \
 compile byte_rchr.c byte.h
 	./compile byte_rchr.c
-
-byte_zero.o: \
-compile byte_zero.c byte.h
-	./compile byte_zero.c
 
 case_diffb.o: \
 compile case_diffb.c case.h
@@ -120,17 +104,19 @@ makelib cdb.o cdb_hash.o cdb_make.o
 	./makelib cdb.a cdb.o cdb_hash.o cdb_make.o
 
 cdb.o: \
-compile cdb.c readwrite.h error.h seek.h byte.h cdb.h uint32.h
+compile cdb.c readwrite.h error.h seek.h byte.h siphash.h cdb.h uint32.h
 	./compile cdb.c
 
 cdb_hash.o: \
-compile cdb_hash.c cdb.h uint32.h
+compile cdb_hash.c siphash.h cdb.h uint32.h
 	./compile cdb_hash.c
 
 cdb_make.o: \
-compile cdb_make.c readwrite.h seek.h error.h alloc.h cdb.h uint32.h \
+compile cdb_make.c readwrite.h seek.h error.h alloc.h siphash.h cdb.h uint32.h \
 cdb_make.h buffer.h uint32.h
 	./compile cdb_make.c
+
+siphash.h: helper.h uint16.h uint32.h uint64.h
 
 check: \
 it instcheck
@@ -301,9 +287,20 @@ compile fixcrio.c sig.h buffer.h strerr.h byte.h readwrite.h exit.h \
 iopause.h taia.h tai.h uint64.h pathexec.h
 	./compile fixcrio.c
 
+fmt.h: \
+uint64.h
+
 fmt_ulong.o: \
 compile fmt_ulong.c fmt.h
 	./compile fmt_ulong.c
+
+fmt_ullint.o: \
+compile fmt_ullint.c fmt.h uint64.h
+	./compile fmt_ullint.c
+
+fmt_ullong.o: \
+compile fmt_ullong.c fmt.h uint64.h
+	./compile fmt_ullong.c
 
 fork.h: \
 choose compile load tryvfork.c fork.h1 fork.h2
@@ -509,7 +506,7 @@ warn-auto.sh rts.sh conf-home
 	chmod 755 rts
 
 rules.o: \
-compile rules.c alloc.h stralloc.h gen_alloc.h open.h cdb.h uint32.h \
+compile rules.c alloc.h stralloc.h gen_alloc.h open.h siphash.h cdb.h uint32.h \
 rules.h stralloc.h
 	./compile rules.c
 
@@ -604,6 +601,10 @@ str_diff.o: \
 compile str_diff.c str.h
 	./compile str_diff.c
 
+str_diffn.o: \
+compile str_diffn.c str.h
+	./compile str_diffn.c
+
 str_len.o: \
 compile str_len.c str.h
 	./compile str_len.c
@@ -612,34 +613,10 @@ str_start.o: \
 compile str_start.c str.h
 	./compile str_start.c
 
-stralloc_cat.o: \
-compile stralloc_cat.c byte.h stralloc.h gen_alloc.h
-	./compile stralloc_cat.c
-
-stralloc_catb.o: \
-compile stralloc_catb.c stralloc.h gen_alloc.h byte.h
-	./compile stralloc_catb.c
-
-stralloc_cats.o: \
-compile stralloc_cats.c byte.h str.h stralloc.h gen_alloc.h
-	./compile stralloc_cats.c
-
-stralloc_copy.o: \
-compile stralloc_copy.c byte.h stralloc.h gen_alloc.h
-	./compile stralloc_copy.c
-
 stralloc_eady.o: \
 compile stralloc_eady.c alloc.h stralloc.h gen_alloc.h \
 gen_allocdefs.h
 	./compile stralloc_eady.c
-
-stralloc_opyb.o: \
-compile stralloc_opyb.c stralloc.h gen_alloc.h byte.h
-	./compile stralloc_opyb.c
-
-stralloc_opys.o: \
-compile stralloc_opys.c byte.h str.h stralloc.h gen_alloc.h
-	./compile stralloc_opys.c
 
 stralloc_pend.o: \
 compile stralloc_pend.c alloc.h stralloc.h gen_alloc.h \
@@ -729,7 +706,7 @@ load tcprules.o cdb.a unix.a byte.a
 
 tcprules.o: \
 compile tcprules.c strerr.h stralloc.h gen_alloc.h getln.h buffer.h \
-stralloc.h buffer.h exit.h fmt.h byte.h cdb_make.h buffer.h uint32.h
+stralloc.h buffer.h exit.h fmt.h byte.h cdb_make.h buffer.h uint32.h open.h
 	./compile tcprules.c
 
 tcprulescheck: \
@@ -738,7 +715,7 @@ load tcprulescheck.o rules.o cdb.a unix.a byte.a
 
 tcprulescheck.o: \
 compile tcprulescheck.c byte.h buffer.h strerr.h env.h rules.h \
-stralloc.h gen_alloc.h
+stralloc.h gen_alloc.h scan.h getln.h open.h str.h
 	./compile tcprulescheck.c
 
 tcpserver: \
@@ -795,8 +772,13 @@ uint64.h: \
 choose compile load tryulong64.c uint64.h1 uint64.h2
 	./choose clr tryulong64 uint64.h1 uint64.h2 > uint64.h
 
+helper.h: uint16.h uint32.h uint64.h
+alloc.h: helper.h
+stralloc.h: alloc.h error.h helper.h uint16.h uint32.h \
+ uint64.h gen_alloc.h byte.h str.h
+
 unix.a: \
-makelib alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o buffer_2.o \
+makelib alloc_re.o buffer.o buffer_0.o buffer_1.o buffer_2.o \
 buffer_copy.o buffer_get.o buffer_put.o env.o error.o error_str.o \
 fd_copy.o fd_move.o getln.o getln2.o ndelay_off.o ndelay_on.o \
 open_read.o open_trunc.o open_write.o openreadclose.o pathexec_env.o \
@@ -804,10 +786,9 @@ pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o sig.o \
 sig_block.o sig_catch.o sig_pause.o socket_accept.o socket_bind.o \
 socket_conn.o socket_delay.o socket_listen.o socket_local.o \
 socket_opts.o socket_remote.o socket_tcp.o socket_udp.o \
-stralloc_cat.o stralloc_catb.o stralloc_cats.o stralloc_copy.o \
-stralloc_eady.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
+stralloc_eady.o stralloc_pend.o \
 strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o wait_pid.o
-	./makelib unix.a alloc.o alloc_re.o buffer.o buffer_0.o \
+	./makelib unix.a alloc_re.o buffer.o buffer_0.o \
 	buffer_1.o buffer_2.o buffer_copy.o buffer_get.o \
 	buffer_put.o env.o error.o error_str.o fd_copy.o fd_move.o \
 	getln.o getln2.o ndelay_off.o ndelay_on.o open_read.o \
@@ -816,9 +797,9 @@ strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o wait_pid.o
 	sig.o sig_block.o sig_catch.o sig_pause.o socket_accept.o \
 	socket_bind.o socket_conn.o socket_delay.o socket_listen.o \
 	socket_local.o socket_opts.o socket_remote.o socket_tcp.o \
-	socket_udp.o stralloc_cat.o stralloc_catb.o stralloc_cats.o \
-	stralloc_copy.o stralloc_eady.o stralloc_opyb.o \
-	stralloc_opys.o stralloc_pend.o strerr_die.o strerr_sys.o \
+	socket_udp.o \
+	stralloc_eady.o \
+	stralloc_pend.o strerr_die.o strerr_sys.o \
 	subgetopt.o wait_nohang.o wait_pid.o
 
 wait_nohang.o: \

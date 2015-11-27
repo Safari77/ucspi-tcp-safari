@@ -1,6 +1,8 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+#include "byte.h"
+
 typedef struct buffer {
   char *x;
   unsigned int p;
@@ -17,7 +19,6 @@ extern void buffer_init(buffer *,int (*)(),int,char *,unsigned int);
 
 extern int buffer_flush(buffer *);
 extern int buffer_put(buffer *,char *,unsigned int);
-extern int buffer_putalign(buffer *,char *,unsigned int);
 extern int buffer_putflush(buffer *,char *,unsigned int);
 extern int buffer_puts(buffer *,char *);
 extern int buffer_putsalign(buffer *,char *);
@@ -52,5 +53,19 @@ extern buffer *buffer_0small;
 extern buffer *buffer_1;
 extern buffer *buffer_1small;
 extern buffer *buffer_2;
+
+static inline int buffer_putalign(buffer *s,char *buf,unsigned int len)
+{
+  unsigned int n;
+
+  while (len > (n = s->n - s->p)) {
+    byte_copy(s->x + s->p,n,buf); s->p += n; buf += n; len -= n;
+    if (buffer_flush(s) == -1) return -1;
+  }
+  /* now len <= s->n - s->p */
+  byte_copy(s->x + s->p,len,buf);
+  s->p += len;
+  return 0;
+}
 
 #endif

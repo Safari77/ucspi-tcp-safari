@@ -1,6 +1,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netdb.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "uint16.h"
 #include "str.h"
 #include "byte.h"
@@ -27,6 +30,7 @@
 #include "rules.h"
 #include "sig.h"
 #include "dns.h"
+#include "uint64.h"
 
 int verbosity = 1;
 int flagkillopts = 1;
@@ -136,6 +140,11 @@ void found(char *data,unsigned int datalen)
 void doit(int t)
 {
   int j;
+  int ret;
+  static stralloc dnserror = {0};
+  char *bannerok;
+  char *bannererr;
+  static char bdelay[] = "0";
 
   remoteipstr[ip4_fmt(remoteipstr,remoteip)] = 0;
 
@@ -171,22 +180,67 @@ void doit(int t)
   env("TCPLOCALIP",localipstr);
   env("TCPLOCALPORT",localportstr);
   env("TCPLOCALHOST",localhost);
+  bannerok = env_get("BANNERDELAY_DNSOK");
+  if (!bannerok) bannerok = bdelay;
+  bannererr = env_get("BANNERDELAY_DNSERROR");
+  if (!bannererr) bannererr = bdelay;
 
-  if (flagremotehost)
-    if (dns_name4(&remotehostsa,remoteip) == 0)
+  if (flagremotehost) {
+    ret = dns_name4(&remotehostsa,remoteip);
+    if (ret == -1) {
+      if (!stralloc_copys(&dnserror, "PTR record")) drop_nomem();
+      if (!stralloc_0(&dnserror)) drop_nomem();
+      env("DNSSOFT", dnserror.s);
+      env("BANNERDELAY", bannererr);
+    }
+    if (ret == 0) {
       if (remotehostsa.len) {
-	if (flagparanoid)
-	  if (dns_ip4(&tmp,&remotehostsa) == 0)
-	    for (j = 0;j + 4 <= tmp.len;j += 4)
-	      if (byte_equal(remoteip,4,tmp.s + j)) {
-		flagparanoid = 0;
-		break;
-	      }
-	if (!flagparanoid) {
-	  if (!stralloc_0(&remotehostsa)) drop_nomem();
-	  remotehost = remotehostsa.s;
-	}
+        if (flagparanoid) {
+          ret = dns_ip4(&tmp,&remotehostsa);
+          if (ret == -1) {
+            if (!stralloc_copys(&dnserror, "A record for ")) drop_nomem();
+            if (!stralloc_cat(&dnserror, &remotehostsa)) drop_nomem();
+            if (!stralloc_0(&dnserror)) drop_nomem();
+            env("DNSSOFT", dnserror.s);
+            env("BANNERDELAY", bannererr);
+          }
+          if (ret == 0) {
+            if (tmp.len == 0) {
+              if (!stralloc_copys(&dnserror, "A record for ")) drop_nomem();
+              if (!stralloc_cat(&dnserror, &remotehostsa)) drop_nomem();
+              if (!stralloc_0(&dnserror)) drop_nomem(); 
+              env("DNSHARD", dnserror.s);
+              env("BANNERDELAY", bannererr);
+            } else {
+              for (j = 0;j + 4 <= tmp.len;j += 4)
+                if (byte_equal(remoteip,4,tmp.s + j)) {
+                  flagparanoid = 0;
+                  env("BANNERDELAY", bannerok);
+                  break;
+                }
+              if (flagparanoid) {
+                if (!stralloc_copys(&dnserror, "matching A record")) drop_nomem();
+                if (!stralloc_0(&dnserror)) drop_nomem();
+                env("DNSHARD", dnserror.s);
+                env("BANNERDELAY", bannererr);
+              }
+            }
+          }
+          if (!flagparanoid) {
+            if (!stralloc_0(&remotehostsa)) drop_nomem();
+            remotehost = remotehostsa.s;
+          }
+        } else {
+          env("BANNERDELAY", bannerok);
+        }
+      } else {
+        if (!stralloc_copys(&dnserror, "PTR record")) drop_nomem();
+        if (!stralloc_0(&dnserror)) drop_nomem();
+        env("BANNERDELAY", bannererr);
+        env("DNSHARD", dnserror.s);
       }
+    }
+  }
   env("TCPREMOTEIP",remoteipstr);
   env("TCPREMOTEPORT",remoteportstr);
   env("TCPREMOTEHOST",remotehost);
@@ -247,6 +301,8 @@ tcpserver: usage: tcpserver \
 [ -g gid ] \
 [ -u uid ] \
 [ -b backlog ] \
+[ -i SO_RCVBUF ] \
+[ -s SO_SNDBUF ] \
 [ -l localname ] \
 [ -t timeout ] \
 host port program",0);
@@ -254,12 +310,14 @@ host port program",0);
 }
 
 unsigned long limit = 40;
-unsigned long numchildren = 0;
+unsigned long volatile numchildren = 0;
 
 int flag1 = 0;
 unsigned long backlog = 20;
 unsigned long uid = 0;
 unsigned long gid = 0;
+unsigned long reservein = 0;
+unsigned long reserveout = 0;
 
 void printstatus(void)
 {
@@ -278,18 +336,21 @@ void sigchld()
 {
   int wstat;
   int pid;
+  int crashed;
  
   while ((pid = wait_nohang(&wstat)) > 0) {
     if (verbosity >= 2) {
+      crashed = wait_crashed(wstat);
       strnum[fmt_ulong(strnum,pid)] = 0;
-      strnum2[fmt_ulong(strnum2,wstat)] = 0;
-      strerr_warn4("tcpserver: end ",strnum," status ",strnum2,0);
+      strnum2[fmt_ulong(strnum2, crashed ? wait_crashed(wstat) : wait_exitcode(wstat))] = 0;
+      strerr_warn4("tcpserver: end ",strnum, crashed ? " status signal " : " status exit ",
+                   strnum2, 0);
     }
     if (numchildren) --numchildren; printstatus();
   }
 }
 
-main(int argc,char **argv)
+int main(int argc,char **argv)
 {
   char *hostname;
   char *portname;
@@ -299,10 +360,14 @@ main(int argc,char **argv)
   unsigned long u;
   int s;
   int t;
- 
-  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:u:g:l:b:B:c:pPoO")) != opteof)
+  static uint64 forks;
+  char seqno[FMT_ULONG];
+
+  while ((opt = getopt(argc,argv,"dDvqQhHrR1UXx:t:u:g:l:b:i:s:B:c:pPoO")) != opteof)
     switch(opt) {
       case 'b': scan_ulong(optarg,&backlog); break;
+      case 'i': scan_ulong(optarg,&reservein); break;
+      case 's': scan_ulong(optarg,&reserveout); break;
       case 'c': scan_ulong(optarg,&limit); break;
       case 'X': flagallownorules = 1; break;
       case 'x': fnrules = optarg; break;
@@ -373,8 +438,21 @@ main(int argc,char **argv)
     strerr_die2sys(111,FATAL,"unable to bind: ");
   if (socket_local4(s,localip,&localport) == -1)
     strerr_die2sys(111,FATAL,"unable to get local address: ");
+  if (reservein) socket_tryreservein(s, reservein);
+  if (reserveout) socket_tryreserveout(s, reserveout);
   if (socket_listen(s,backlog) == -1)
     strerr_die2sys(111,FATAL,"unable to listen: ");
+
+  if (socket_rcvbufsize(s, &reservein) == 0) {
+    strnum[fmt_ulong(strnum, reservein)] = 0;
+    strerr_warn3("tcpserver: SO_RCVBUF ", strnum, " bytes", 0);
+  }
+
+  if (socket_sndbufsize(s, &reserveout) == 0) {
+    strnum[fmt_ulong(strnum, reserveout)] = 0;
+    strerr_warn3("tcpserver: SO_SNDBUF ", strnum, " bytes", 0);
+  }
+
   ndelay_off(s);
 
   if (gid) if (prot_gid(gid) == -1)
@@ -404,7 +482,10 @@ main(int argc,char **argv)
 
     if (t == -1) continue;
     ++numchildren; printstatus();
- 
+    seqno[fmt_ullong(seqno, forks)] = 0;
+    forks++;
+    env("SEQNO",seqno);
+
     switch(fork()) {
       case 0:
         close(s);

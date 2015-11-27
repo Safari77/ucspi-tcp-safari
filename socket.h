@@ -16,7 +16,11 @@ extern int socket_recv4(int,char *,int,char *,uint16 *);
 extern int socket_send4(int,char *,int,char *,uint16);
 extern int socket_local4(int,char *,uint16 *);
 extern int socket_remote4(int,char *,uint16 *);
-
+extern int socket_ipoptionskill(int);
+extern int socket_tcpnodelay(int);
 extern void socket_tryreservein(int,int);
+extern int socket_rcvbufsize(int, unsigned long*);
+extern void socket_tryreserveout(int,int);
+extern int socket_sndbufsize(int, unsigned long*);
 
 #endif

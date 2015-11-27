@@ -1,21 +1,10 @@
-/* Public domain. */
-
 #include "cdb.h"
+#include "siphash.h"
 
-uint32 cdb_hashadd(uint32 h,unsigned char c)
+uint32 cdb_hash(unsigned char *k, unsigned int length)
 {
-  h += (h << 5);
-  return h ^ c;
+  static unsigned char cdbinitkey[32] = "cdbinitkey_foobarquxfubardeadbee";
+
+  return siphash(k, length, cdbinitkey);
 }
 
-uint32 cdb_hash(char *buf,unsigned int len)
-{
-  uint32 h;
-
-  h = CDB_HASHSTART;
-  while (len) {
-    h = cdb_hashadd(h,*buf++);
-    --len;
-  }
-  return h;
-}

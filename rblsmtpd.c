@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "byte.h"
 #include "str.h"
 #include "scan.h"
@@ -71,11 +75,12 @@ void rbl(char *base)
     }
     return;
   }
-  if (text.len)
+  if (text.len) {
     if (flagrblbounce)
       decision = 3;
     else
       decision = 2;
+  }
 }
 
 void antirbl(char *base)
@@ -153,7 +158,7 @@ void rblsmtpd(void)
   _exit(0);
 }
 
-main(int argc,char **argv,char **envp)
+int main(int argc,char **argv,char **envp)
 {
   int flagwantdefaultrbl = 1;
   char *x;

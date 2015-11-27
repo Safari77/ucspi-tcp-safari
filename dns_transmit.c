@@ -1,3 +1,7 @@
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
 #include "socket.h"
 #include "alloc.h"
 #include "error.h"

@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "fmt.h"
 #include "buffer.h"
 #include "socket.h"

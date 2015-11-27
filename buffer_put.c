@@ -30,20 +30,6 @@ int buffer_flush(buffer *s)
   return allwrite(s->op,s->fd,s->x,p);
 }
 
-int buffer_putalign(buffer *s,char *buf,unsigned int len)
-{
-  unsigned int n;
- 
-  while (len > (n = s->n - s->p)) {
-    byte_copy(s->x + s->p,n,buf); s->p += n; buf += n; len -= n;
-    if (buffer_flush(s) == -1) return -1;
-  }
-  /* now len <= s->n - s->p */
-  byte_copy(s->x + s->p,len,buf);
-  s->p += len;
-  return 0;
-}
-
 int buffer_put(buffer *s,char *buf,unsigned int len)
 {
   unsigned int n;

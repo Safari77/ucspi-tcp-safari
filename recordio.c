@@ -1,3 +1,6 @@
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "sig.h"
 #include "buffer.h"
 #include "strerr.h"
@@ -141,7 +144,7 @@ void doit(int fdleft,int fdright) /* copy 0 -> fdleft, copy fdright -> 1 */
   _exit(0);
 }
 
-main(int argc,char **argv,char **envp)
+int main(int argc,char **argv,char **envp)
 {
   int piin[2];
   int piout[2];

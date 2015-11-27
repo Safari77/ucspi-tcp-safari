@@ -1,10 +1,12 @@
 #include "byte.h"
 
-void byte_copyr(to,n,from)
-register char *to;
-register unsigned int n;
-register char *from;
+void byte_copyr(__to,n,__from)
+void *__to;
+unsigned long int n;
+const void *__from;
 {
+  char *to = __to;
+  const char *from = __from;
   to += n;
   from += n;
   for (;;) {

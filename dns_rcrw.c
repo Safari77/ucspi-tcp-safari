@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "taia.h"
 #include "env.h"
 #include "byte.h"
